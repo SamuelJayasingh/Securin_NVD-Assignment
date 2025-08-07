@@ -1,0 +1,6 @@
+flask
+flask-cors
+pymongo
+apscheduler
+python-dotenv
+tqdm
