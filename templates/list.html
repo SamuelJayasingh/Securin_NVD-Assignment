@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CVE List</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1>CVE LIST</h1>
+  <div>Total Records: <span id="totalRecords">...</span></div>
+
+  <table id="cveTable">
+    <thead>
+      <tr>
+        <th>CVE ID</th>
+        <th>Identifier</th>
+        <th onclick="changeSort('published')">Published Date</th>
+        <th onclick="changeSort('lastModified')">Last Modified Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="controls">
+    Results per page:
+    <select id="perPageSelect" onchange="loadCves(1)">
+      <option value="10" selected>10</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+  </div>
+
+  <div id="pagination"></div>
+
+  <script>
+    let currentPage = 1;
+    let currentSort = "published";
+    let currentOrder = "desc";
+
+    function loadCves(page = 1) {
+      currentPage = page;
+      const perPage = document.getElementById("perPageSelect").value;
+      const url = `/cves/list?page=${page}&resultsPerPage=${perPage}&sortBy=${currentSort}&order=${currentOrder}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.querySelector("#cveTable tbody");
+          tbody.innerHTML = "";
+          data.results.forEach(cve => {
+            const row = tbody.insertRow();
+            row.onclick = () => window.location.href = `/cves/${cve.id}`;
+            row.innerHTML = `
+              <td>${cve.id}</td>
+              <td>${cve.sourceIdentifier}</td>
+              <td>${formatDate(cve.published)}</td>
+              <td>${formatDate(cve.lastModified)}</td>
+              <td>${cve.vulnStatus}</td>
+            `;
+          });
+
+          document.getElementById("totalRecords").innerText = data.totalRecords;
+          renderPagination(data.totalRecords, perPage, page);
+        });
+    }
+
+    function renderPagination(total, perPage, currentPage) {
+      const totalPages = Math.ceil(total / perPage);
+      let html = '';
+
+      for (let i = 1; i <= totalPages && i <= 10; i++) {
+        html += `<button onclick="loadCves(${i})" ${i === currentPage ? 'disabled' : ''}>${i}</button>`;
+      }
+
+      document.getElementById("pagination").innerHTML = html;
+    }
+
+    function changeSort(field) {
+      if (currentSort === field) {
+        currentOrder = currentOrder === "asc" ? "desc" : "asc";
+      } else {
+        currentSort = field;
+        currentOrder = "desc";
+      }
+      loadCves(1);
+    }
+
+    function formatDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString("en-GB");
+    }
+
+    window.onload = () => loadCves(1);
+  </script>
+</body>
+</html>

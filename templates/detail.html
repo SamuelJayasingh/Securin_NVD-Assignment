@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ cve_id }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin-top: 30px;
+      font-size: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    pre {
+      background-color: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #eee;
+    }
+
+    .score-label {
+      color: red;
+      font-weight: bold;
+    }
+
+    .section {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>{{ cve_id }}</h1>
+
+  <div class="section">
+    <h2>Description:</h2>
+    <p id="description">Loading...</p>
+  </div>
+
+  <div class="section">
+    <h2>CVSS V2 Metrics:</h2>
+    <p><strong>Severity:</strong> <span id="severity" class="score-label"></span></p>
+    <p><strong>Score:</strong> <span id="scoreV2"></span></p>
+    <p><strong>Vector String:</strong> <span id="vectorString"></span></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Access Vector</th>
+          <th>Access Complexity</th>
+          <th>Authentication</th>
+          <th>Confidentiality Impact</th>
+          <th>Integrity Impact</th>
+          <th>Availability Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="metricsRow">
+          <td colspan="6">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Scores:</h2>
+    <p><strong>Exploitability Score:</strong> <span id="exploitScore"></span></p>
+    <p><strong>Impact Score:</strong> <span id="impactScore"></span></p>
+  </div>
+
+  <div class="section">
+    <h2>CPE:</h2>
+    <table id="cpeTable">
+      <thead>
+        <tr>
+          <th>Criteria</th>
+          <th>Match Criteria ID</th>
+          <th>Vulnerable</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="3">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const cveId = "{{ cve_id }}";
+
+    async function loadDetails() {
+      try {
+        const res = await fetch(`/api/cves/${cveId}`);
+        const data = await res.json();
+
+        // Description
+        document.getElementById("description").innerText = data.description || "N/A";
+
+        // CVSS V2 data
+        const metrics = data.cvssV2 || {};
+        document.getElementById("severity").innerText = metrics.baseSeverity || "N/A";
+        document.getElementById("scoreV2").innerText = metrics.baseScore || "N/A";
+        document.getElementById("vectorString").innerText = metrics.vectorString || "N/A";
+
+        const impactRow = document.getElementById("metricsRow");
+        if (metrics) {
+          impactRow.innerHTML = `
+            <td>${metrics.accessVector || "-"}</td>
+            <td>${metrics.accessComplexity || "-"}</td>
+            <td>${metrics.authentication || "-"}</td>
+            <td>${metrics.confidentialityImpact || "-"}</td>
+            <td>${metrics.integrityImpact || "-"}</td>
+            <td>${metrics.availabilityImpact || "-"}</td>
+          `;
+        }
+
+        // Scores
+        document.getElementById("exploitScore").innerText = metrics.exploitabilityScore || "-";
+        document.getElementById("impactScore").innerText = metrics.impactScore || "-";
+
+        // CPE Table
+        const cpeTableBody = document.querySelector("#cpeTable tbody");
+        const cpes = data.cpe || [];
+
+        if (cpes.length > 0) {
+          cpeTableBody.innerHTML = cpes.map(cpe => `
+            <tr>
+              <td>${cpe.criteria || "-"}</td>
+              <td>${cpe.matchCriteriaId || "-"}</td>
+              <td>${cpe.vulnerable ? "Yes" : "No"}</td>
+            </tr>
+          `).join("");
+        } else {
+          cpeTableBody.innerHTML = `<tr><td colspan="3">No CPEs found.</td></tr>`;
+        }
+
+      } catch (err) {
+        console.error("Error loading CVE details:", err);
+      }
+    }
+
+    window.onload = loadDetails;
+  </script>
+</body>
+</html>

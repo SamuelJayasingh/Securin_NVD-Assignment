@@ -74,9 +74,9 @@ if __name__ == "__main__":
     # full_sync()
 
     # Upload from local JSON file
-    upload_from_json()
+    # upload_from_json()
 
     # Uncomment to enable periodic sync
-    # run_scheduler()
+    run_scheduler()
 
     print("Finished.")
